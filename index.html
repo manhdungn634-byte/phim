@@ -97,15 +97,15 @@ function save(){const v=$('v');if(!P)return;
  try{localStorage.setItem('phim_watch',JSON.stringify(watching))}catch(e){}}
 function buildEps(){$('eps').innerHTML=P.eps.map((e,i)=>`<button class="e${i===P.i?' cur':''}" data-i="${i}">${esc(e.n)}</button>`).join('');
  const c=$('eps').querySelector('.cur');if(c)c.scrollIntoView({inline:'center',block:'nearest'})}
-function fail(){const e=P.eps[P.i];if(e.e){$('v').style.display='none';$('fr').style.display='block';$('fr').src=e.e}else $('ti').textContent='Không phát được tập này';show()}
+function fail(){const e=P.eps[P.i];if(e.e){$('v').style.display='none';$('fr').style.display='block';$('fr').src=e.e;$('sp').classList.remove('on')}else{$('sp').classList.remove('on');$('ti').textContent='Không phát được tập này'}show()}
 function ep(i,t){
  P.i=i;const e=P.eps[i],v=$('v'),fr=$('fr');
  if(hls){hls.destroy();hls=null}
- v.pause();$('sp').classList.add('on');$('ti').textContent=P.m.name+' — '+e.n;buildEps();show();
+ v.pause();$('sp').classList.add('on');clearTimeout(P.to);P.to=setTimeout(()=>{if($('sp').classList.contains('on')&&$('v').style.display!=='none')fail()},15000);$('ti').textContent=P.m.name+' — '+e.n;buildEps();show();
  if(!e.u){v.style.display='none';fr.style.display='block';fr.src=e.e;$('sp').classList.remove('on');return}
  fr.style.display='none';fr.src='';v.style.display='block';
- const go=()=>{if(t)v.currentTime=t;v.play().catch(()=>{})};
- if(window.Hls&&Hls.isSupported()){hls=new Hls({startFragPrefetch:true,capLevelToPlayerSize:true,maxBufferLength:20,backBufferLength:30,manifestLoadingMaxRetry:3,fragLoadingMaxRetry:4});hls.loadSource(e.u);hls.attachMedia(v);
+ const go=()=>{if(t)v.currentTime=t;v.play().catch(()=>{$('sp').classList.remove('on');$('ti').textContent=P.m.name+' — '+e.n+' (chạm vào màn hình để phát)';show()})};
+ if(!v.canPlayType('application/vnd.apple.mpegurl')&&window.Hls&&Hls.isSupported()){hls=new Hls({startFragPrefetch:true,capLevelToPlayerSize:true,maxBufferLength:20,backBufferLength:30,manifestLoadingMaxRetry:3,fragLoadingMaxRetry:4});hls.loadSource(e.u);hls.attachMedia(v);
   hls.on(Hls.Events.MANIFEST_PARSED,go);
   hls.on(Hls.Events.ERROR,(_,d)=>{if(!d.fatal)return;if(d.type==='mediaError')hls.recoverMediaError();else fail()})}
  else{v.src=e.u;v.onloadedmetadata=go;v.onerror=fail}
@@ -123,13 +123,13 @@ async function play(slug){
   P={m,eps,i:0};let i=old&&old.i<eps.length?old.i:0;
   document.activeElement&&document.activeElement.blur();
   $('pl').classList.add('on');ep(i,old&&old.i===i?old.t:0);
- }catch(e){$('pl').classList.remove('on');$('sp').classList.remove('on');$('msg').textContent='Không mở được phim này.'}
+ }catch(e){$('pl').classList.remove('on');$('sp').classList.remove('on');$('msg').textContent='Không mở được phim này ('+((e&&e.message)||'dữ liệu rỗng')+'). Thử lại hoặc kiểm tra API.';scrollTo(0,0)}
 }
 function stop(){const v=$('v');save();v.pause();v.removeAttribute('src');$('fr').src='';if(hls){hls.destroy();hls=null}P=null;$('sp').classList.remove('on');$('pl').classList.remove('on');renderWatch()}
 (function(){const v=$('v');
  v.ontimeupdate=()=>{if(!P||!v.duration)return;$('pf').style.width=v.currentTime/v.duration*100+'%';$('tm').textContent=fmt(v.currentTime)+' / '+fmt(v.duration);
   if(Math.floor(v.currentTime)%5===0)save()};
- v.onwaiting=()=>$('sp').classList.add('on');v.onplaying=v.oncanplay=()=>$('sp').classList.remove('on');
+ v.onwaiting=()=>$('sp').classList.add('on');v.onplaying=v.oncanplay=()=>{$('sp').classList.remove('on');if(P)clearTimeout(P.to)};
  v.onended=()=>{if(P&&P.i<P.eps.length-1)ep(P.i+1,0)};
  v.onclick=()=>{show();v.paused?v.play():v.pause()};
  $('pb').onclick=e=>{if(!v.duration)return;const r=$('pb').getBoundingClientRect();v.currentTime=(e.clientX-r.left)/r.width*v.duration;show()};
