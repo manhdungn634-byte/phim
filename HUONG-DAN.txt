@@ -1,0 +1,6 @@
+PHIM - web doc lap
+1. Dua ca thu muc nay (index.html, manifest.webmanifest, sw.js, icon*) len hosting HTTPS:
+   - Netlify Drop (app.netlify.com/drop): keo tha thu muc
+   - hoac GitHub Pages / Cloudflare Pages / Vercel
+2. Mo link tren TV hoac dien thoai, vao "API" de nhap dia chi (mac dinh https://phimapi.com).
+3. iPhone: Safari > Chia se > Them vao MH chinh. Android/TV: menu trinh duyet > Cai dat ung dung.

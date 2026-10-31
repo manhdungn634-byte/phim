@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><title>Phim</title>
+<meta name="theme-color" content="#0b0d12">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Phim">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="preconnect" href="https://phimapi.com"><link rel="preconnect" href="https://phimimg.com">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:dark;--bg:#0b0d12;--card:#1a1e29;--tx:#f2f4f8;--mu:#9aa3b5;--ac:#e50914;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,Roboto,Arial,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 4vw;position:absolute;top:0;left:0;right:0;z-index:5}
+.logo{font-size:28px;font-weight:800;color:var(--ac);letter-spacing:1px}
+button{font:inherit;color:var(--tx);background:#ffffff22;border:0;border-radius:8px;padding:10px 20px;cursor:pointer}
+.f:focus,button:focus,input:focus{outline:3px solid #fff;transform:scale(1.06);z-index:3}
+.hero{position:relative;height:56vh;min-height:300px;display:flex;align-items:flex-end;padding:0 4vw 28px;background-size:cover;background-position:center top}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,var(--bg),#0b0d1255 60%,#0b0d1299)}
+.hero>div{position:relative;z-index:2;max-width:640px}
+.hero h1{margin:0 0 8px;font-size:clamp(26px,4vw,48px)}.hero p{color:var(--mu);margin:0 0 16px}
+.hero button.p{background:var(--ac);font-weight:700}
+h2{margin:18px 4vw 8px;font-size:20px}
+.row{display:flex;gap:14px;overflow-x:auto;padding:8px 4vw 14px;scrollbar-width:none}
+.card{flex:0 0 auto;width:150px;aspect-ratio:2/3;border-radius:10px;background:var(--card) center/cover;position:relative;overflow:hidden;transition:transform .12s}
+.card span{position:absolute;left:0;right:0;bottom:0;padding:22px 8px 8px;font-size:13px;background:linear-gradient(0deg,#000d,transparent)}
+.bar{position:absolute;left:0;bottom:0;height:4px;background:var(--ac)}
+.note{margin:4px 4vw;color:var(--mu);font-size:13px}
+#set,#pl{position:fixed;inset:0;background:#000d;display:none;z-index:9;align-items:center;justify-content:center}
+#set.on,#pl.on{display:flex}
+.box{background:var(--card);padding:24px;border-radius:14px;width:min(560px,92vw);display:grid;gap:10px}
+.box label{color:var(--mu);font-size:13px}
+input{width:100%;padding:12px;border-radius:8px;border:1px solid #444;background:#0b0d12;color:var(--tx);font:inherit}
+#pl{background:#000}video{width:100%;height:100%;background:#000}#ov{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:20px 4vw;background:linear-gradient(#000b,transparent 25%,transparent 60%,#000d);opacity:0;transition:opacity .2s;pointer-events:none}#ov.on{opacity:1}#ov.on #pb,#ov.on .e{pointer-events:auto}#ti{font-size:20px;font-weight:700}#sp{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:22px;pointer-events:none;z-index:2}#sp.on{display:flex}#eps{display:flex;gap:8px;overflow-x:auto;padding:8px 0 12px;scrollbar-width:none}.e{flex:0 0 auto;background:#ffffff33;padding:8px 14px}.e.cur{background:var(--ac)}#pb{height:8px;background:#ffffff44;border-radius:4px;cursor:pointer}#pf{display:block;height:100%;width:0;background:var(--ac);border-radius:4px}
+</style></head><body>
+<header><div class="logo">PHIM</div><button class="f" id="gear">⚙ API</button></header>
+<section class="hero" id="hero"></section>
+<div class="note" id="msg"></div>
+<h2>Đang xem</h2><div class="row" id="watch"></div>
+<h2>Phim mới nhất</h2><div class="row" id="latest"></div>
+<h2>Phim nổi bật</h2><div class="row" id="feat"></div>
+
+<div id="set"><div class="box">
+<h3 style="margin:0">Cài đặt API</h3>
+<label>Địa chỉ API</label><input id="api" placeholder="https://phimapi.com">
+<label>Đường dẫn danh sách phim mới</label><input id="path" placeholder="/danh-sach/phim-moi-cap-nhat?page=1">
+<label>Tiền tố ảnh (nếu poster là đường dẫn tương đối)</label><input id="img" placeholder="https://phimimg.com/">
+<div style="display:flex;gap:10px"><button class="f" id="save">Lưu &amp; tải</button><button class="f" id="close">Đóng</button></div>
+</div></div>
+<div id="pl"><video id="v" autoplay playsinline></video><div id="sp">Đang tải…</div><iframe id="fr" allowfullscreen allow="autoplay; fullscreen" style="display:none;width:100%;height:100%;border:0"></iframe><div id="ov"><div id="ti"></div><div><div id="eps"></div><div id="pb"><i id="pf"></i></div><div id="tm" class="note" style="margin:6px 0 0"></div></div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const S={api:'https://phimapi.com',path:'/danh-sach/phim-moi-cap-nhat?page=1',img:'https://phimimg.com/'};
+let watching=[],hls=null,cur=null;
+try{Object.assign(S,JSON.parse(localStorage.getItem('phim_cfg')||'{}'));watching=JSON.parse(localStorage.getItem('phim_watch')||'[]')}catch(e){}
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const bg=u=>u?`background-image:url('${esc(u)}')`:'';
+const demo=[...Array(12)].map((_,i)=>({name:'Phim mẫu '+(i+1),slug:'demo'+i,year:2026,poster:'',demo:1}));
+let PI='';function imgUrl(p){if(!p)return'';if(/^https?:/.test(p))return p;if(PI&&!/\//.test(p))return PI+p;return S.img+p.replace(/^\//,'')}
+function norm(j){PI=j.pathImage||'';const a=j.items||(j.data&&j.data.items)||j.data||[];
+ return(Array.isArray(a)?a:[]).map(x=>({name:x.name||x.title,slug:x.slug,year:x.year,poster:imgUrl(x.poster_url||x.thumb_url||x.poster)}))}
+function card(m,pct){const hue=(m.slug||'').length*37%360;
+ return`<div class="card f" tabindex="0" data-s="${esc(m.slug)}" style="${m.poster?bg(m.poster):`background-image:linear-gradient(160deg,hsl(${hue} 50% 30%),#111)`}"><span>${esc(m.name)}</span>${pct?`<i class="bar" style="width:${pct}%"></i>`:''}</div>`}
+function render(list){
+ window.L=list;
+ const h=list[0]||{};
+ $('hero').style=bg(h.poster);
+ $('hero').innerHTML=`<div><h1>${esc(h.name)}</h1><p>${h.year?esc(h.year)+' · ':''}Phim nổi bật hôm nay</p><button class="f p" tabindex="0" data-s="${esc(h.slug)}">▶ Xem ngay</button></div>`;
+ $('latest').innerHTML=list.map(m=>card(m)).join('');
+ $('feat').innerHTML=list.slice(0,6).reverse().map(m=>card(m)).join('');
+ renderWatch();
+}
+function renderWatch(){
+ $('watch').innerHTML=watching.length?watching.map(m=>card(m,m.pct)).join(''):'<div class="note">Chưa có phim đang xem.</div>';
+}
+async function load(){
+ if(!S.api){render(demo);$('msg').textContent='Đang hiển thị dữ liệu mẫu. Bấm “⚙ API” để nhập API phim của bạn.';return}
+ try{const c=JSON.parse(localStorage.getItem('phim_list')||'null');if(c&&c.k===S.api+S.path)render(c.l)}catch(e){}
+ $('msg').textContent='Đang tải…';
+ try{const r=await fetch(S.api.replace(/\/$/,'')+S.path);const l=norm(await r.json());
+  if(!l.length)throw 0;render(l);$('msg').textContent='';try{localStorage.setItem('phim_list',JSON.stringify({k:S.api+S.path,l}))}catch(e){}}
+ catch(e){if(!window.L)render(demo);$('msg').textContent='Không tải được API. Kiểm tra địa chỉ rồi thử lại.'}
+}
+const DC={};let pt=null;
+function detail(slug){return DC[slug]||(DC[slug]=fetch(S.api.replace(/\/$/,'')+'/phim/'+encodeURIComponent(slug)).then(r=>r.json()).catch(e=>{delete DC[slug];throw e}))}
+document.addEventListener('focusin',e=>{const s=e.target.dataset&&e.target.dataset.s;if(s&&S.api&&!s.startsWith('demo')){clearTimeout(pt);pt=setTimeout(()=>detail(s).catch(()=>{}),250)}});
+let P=null,ht=null;
+const fmt=s=>{s=Math.floor(s||0);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+function show(){const o=$('ov');o.classList.add('on');clearTimeout(ht);ht=setTimeout(()=>{if(!document.activeElement.classList.contains('e'))o.classList.remove('on')},4000)}
+function save(){const v=$('v');if(!P)return;
+ watching=[{slug:P.m.slug,name:P.m.name,poster:P.m.poster,year:P.m.year,i:P.i,t:v.currentTime||0,pct:v.duration?Math.round(v.currentTime/v.duration*100):0},...watching.filter(x=>x.slug!==P.m.slug)].slice(0,20);
+ try{localStorage.setItem('phim_watch',JSON.stringify(watching))}catch(e){}}
+function buildEps(){$('eps').innerHTML=P.eps.map((e,i)=>`<button class="e${i===P.i?' cur':''}" data-i="${i}">${esc(e.n)}</button>`).join('');
+ const c=$('eps').querySelector('.cur');if(c)c.scrollIntoView({inline:'center',block:'nearest'})}
+function fail(){const e=P.eps[P.i];if(e.e){$('v').style.display='none';$('fr').style.display='block';$('fr').src=e.e}else $('ti').textContent='Không phát được tập này';show()}
+function ep(i,t){
+ P.i=i;const e=P.eps[i],v=$('v'),fr=$('fr');
+ if(hls){hls.destroy();hls=null}
+ v.pause();$('sp').classList.add('on');$('ti').textContent=P.m.name+' — '+e.n;buildEps();show();
+ if(!e.u){v.style.display='none';fr.style.display='block';fr.src=e.e;$('sp').classList.remove('on');return}
+ fr.style.display='none';fr.src='';v.style.display='block';
+ const go=()=>{if(t)v.currentTime=t;v.play().catch(()=>{})};
+ if(window.Hls&&Hls.isSupported()){hls=new Hls({startFragPrefetch:true,capLevelToPlayerSize:true,maxBufferLength:20,backBufferLength:30,manifestLoadingMaxRetry:3,fragLoadingMaxRetry:4});hls.loadSource(e.u);hls.attachMedia(v);
+  hls.on(Hls.Events.MANIFEST_PARSED,go);
+  hls.on(Hls.Events.ERROR,(_,d)=>{if(!d.fatal)return;if(d.type==='mediaError')hls.recoverMediaError();else fail()})}
+ else{v.src=e.u;v.onloadedmetadata=go;v.onerror=fail}
+}
+async function play(slug){
+ if(String(slug).startsWith('demo')){$('msg').textContent='Đây là phim mẫu. Hãy nhập API để xem phim thật.';return}
+ const m=(window.L||[]).find(x=>x.slug===slug)||watching.find(x=>x.slug===slug)||{slug,name:slug};
+ const old=watching.find(x=>x.slug===slug);
+ document.activeElement&&document.activeElement.blur();P=null;$('pl').classList.add('on');$('sp').classList.add('on');
+ try{const j=await detail(slug);
+  const sv=j.episodes||[],eps=[];
+  sv.forEach(s=>(s.server_data||[]).forEach(d=>eps.push({n:(sv.length>1?s.server_name+' · ':'')+d.name,u:d.link_m3u8,e:d.link_embed})));
+  if(!eps.length)throw 0;
+  if(j.movie&&!m.name)m.name=j.movie.name;
+  P={m,eps,i:0};let i=old&&old.i<eps.length?old.i:0;
+  document.activeElement&&document.activeElement.blur();
+  $('pl').classList.add('on');ep(i,old&&old.i===i?old.t:0);
+ }catch(e){$('pl').classList.remove('on');$('sp').classList.remove('on');$('msg').textContent='Không mở được phim này.'}
+}
+function stop(){const v=$('v');save();v.pause();v.removeAttribute('src');$('fr').src='';if(hls){hls.destroy();hls=null}P=null;$('sp').classList.remove('on');$('pl').classList.remove('on');renderWatch()}
+(function(){const v=$('v');
+ v.ontimeupdate=()=>{if(!P||!v.duration)return;$('pf').style.width=v.currentTime/v.duration*100+'%';$('tm').textContent=fmt(v.currentTime)+' / '+fmt(v.duration);
+  if(Math.floor(v.currentTime)%5===0)save()};
+ v.onwaiting=()=>$('sp').classList.add('on');v.onplaying=v.oncanplay=()=>$('sp').classList.remove('on');
+ v.onended=()=>{if(P&&P.i<P.eps.length-1)ep(P.i+1,0)};
+ v.onclick=()=>{show();v.paused?v.play():v.pause()};
+ $('pb').onclick=e=>{if(!v.duration)return;const r=$('pb').getBoundingClientRect();v.currentTime=(e.clientX-r.left)/r.width*v.duration;show()};
+ $('pl').addEventListener('mousemove',show);$('pl').addEventListener('touchstart',show);
+})();
+document.addEventListener('click',e=>{const c=e.target.closest('[data-s]');if(c)return play(c.dataset.s);
+ const b=e.target.closest('.e');if(b&&P)ep(+b.dataset.i,0)});
+document.addEventListener('keydown',e=>{
+ const k=e.key,v=$('v');
+ if(!$('pl').classList.contains('on')){
+  const a=document.activeElement;if(k==='Enter'&&a&&a.tagName==='DIV'&&a.dataset.s){play(a.dataset.s);e.preventDefault()}return}
+ if(!P)return;show();const a=document.activeElement,inEps=a&&a.classList.contains('e');
+ if(inEps){
+  if(k==='ArrowLeft'||k==='ArrowRight'){const n=k==='ArrowLeft'?a.previousElementSibling:a.nextElementSibling;if(n){n.focus();n.scrollIntoView({inline:'center',block:'nearest'})}e.preventDefault()}
+  else if(k==='ArrowDown'){a.blur();e.preventDefault()}
+  return}
+ if(k==='Enter'||k===' '||k==='MediaPlayPause'){v.paused?v.play():v.pause();e.preventDefault()}
+ else if(k==='ArrowLeft'||k==='MediaRewind'){v.currentTime=Math.max(0,v.currentTime-10);e.preventDefault()}
+ else if(k==='ArrowRight'||k==='MediaFastForward'){v.currentTime+=10;e.preventDefault()}
+ else if(k==='ArrowUp'){const c=$('eps').querySelector('.cur');if(c){c.focus()}e.preventDefault()}
+ else if(k==='MediaTrackNext'&&P.i<P.eps.length-1)ep(P.i+1,0);
+ else if(k==='MediaTrackPrevious'&&P.i>0)ep(P.i-1,0);
+});
+// D-pad navigation
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'||e.key==='Backspace'&&!/INPUT/.test(document.activeElement.tagName)||e.keyCode===4){
+  if($('pl').classList.contains('on'))stop();else $('set').classList.remove('on');return}
+ const dir={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+ if(!dir||$('pl').classList.contains('on')||/INPUT/.test(document.activeElement.tagName)&&dir[1]===0)return;
+ const a=document.activeElement,root=$('set').classList.contains('on')?$('set'):document;
+ const els=[...root.querySelectorAll('.f,input')].filter(x=>x.offsetParent);
+ if(!els.includes(a)){els[0]&&els[0].focus();e.preventDefault();return}
+ const r=a.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let best=null,bs=1e9;
+ els.forEach(x=>{if(x===a)return;const q=x.getBoundingClientRect(),dx=q.left+q.width/2-cx,dy=q.top+q.height/2-cy;
+  const along=dir[0]?dx*dir[0]:dy*dir[1],off=dir[0]?Math.abs(dy):Math.abs(dx);
+  if(along<=4)return;const s=along+off*(dir[0]?3:1.5);if(s<bs){bs=s;best=x}});
+ if(best){best.focus();best.scrollIntoView({block:'center',inline:'center',behavior:'smooth'})}e.preventDefault()});
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+load();setTimeout(()=>{const f=document.querySelector('.hero .f');f&&f.focus()},100);
+</script></body></html>
